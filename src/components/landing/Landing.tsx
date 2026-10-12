@@ -880,12 +880,28 @@ function CountUp({ value }: { value: number }) {
 function useReveal() {
   useEffect(() => {
     const items = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const viewport = window.innerHeight;
-    for (const el of items) {
-      if (el.getBoundingClientRect().top < viewport) el.classList.add("is-visible");
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      items.forEach((el) => el.classList.add("is-visible"));
+      return;
     }
+
+    const checkVisible = () => {
+      const vh = window.innerHeight || document.documentElement.clientHeight || 900;
+      for (const el of items) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= vh + 100) {
+          el.classList.add("is-visible");
+        }
+      }
+    };
+
+    checkVisible();
+    const raf = requestAnimationFrame(checkVisible);
+    const timeout = setTimeout(checkVisible, 250);
+
     document.documentElement.classList.add("nr-animate");
+
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -895,10 +911,26 @@ function useReveal() {
           }
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+      { threshold: 0.05, rootMargin: "50px 0px 50px 0px" },
     );
-    for (const el of items) if (!el.classList.contains("is-visible")) io.observe(el);
-    return () => io.disconnect();
+
+    for (const el of items) {
+      if (!el.classList.contains("is-visible")) {
+        io.observe(el);
+      }
+    }
+
+    // Safety fallback: ensure nothing stays hidden if observer didn't trigger in iframe
+    const safetyTimer = setTimeout(() => {
+      items.forEach((el) => el.classList.add("is-visible"));
+    }, 1200);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timeout);
+      clearTimeout(safetyTimer);
+      io.disconnect();
+    };
   }, []);
 }
 

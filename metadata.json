@@ -1,0 +1,6 @@
+{
+  "name": "Navidad Rentable",
+  "description": "Aprende a hacer y vender productos navideños desde tu casa: qué vender, cómo hacerlo paso a paso, cuánto cobrar con ganancia y cómo entregar tus pedidos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
